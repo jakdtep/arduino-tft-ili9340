@@ -1,0 +1,2 @@
+export ARDUINO_PATH=/home/jak/arduino-1.6.4
+$ARDUINO_PATH/arduino --upload lcd_source/lcd_source.ino
