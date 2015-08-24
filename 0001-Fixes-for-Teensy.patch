@@ -1,0 +1,128 @@
+From 4c2df7e1055ecc6512630e1fa397dbe6738ef227 Mon Sep 17 00:00:00 2001
+From: Joseph Andly Koola <josephandly@gmail.com>
+Date: Sun, 23 Aug 2015 21:46:08 -0400
+Subject: [PATCH] Fixes for Teensy
+
+---
+ Arduino.mk | 10 +++++-----
+ Teensy.mk  | 26 +++++++++++++++++---------
+ 2 files changed, 22 insertions(+), 14 deletions(-)
+
+diff --git a/Arduino.mk b/Arduino.mk
+index ba16697..a2281ce 100644
+--- a/Arduino.mk
++++ b/Arduino.mk
+@@ -461,7 +461,7 @@ else
+ endif #ndef AVR_TOOLS_DIR
+ 
+ ifndef AVR_TOOLS_PATH
+-    AVR_TOOLS_PATH    = $(AVR_TOOLS_DIR)/bin
++    AVR_TOOLS_PATH    = $(AVR_TOOLS_DIR)
+ endif
+ 
+ ARDUINO_LIB_PATH  = $(ARDUINO_DIR)/libraries
+@@ -866,7 +866,7 @@ ifndef ARDUINO_HEADER
+     ifeq ($(shell expr $(ARDUINO_VERSION) '<' 100), 1)
+         ARDUINO_HEADER=WProgram.h
+     else
+-        ARDUINO_HEADER=Arduino.h
++        ARDUINO_HEADER=$(ARDUINO_CORE_PATH)/Arduino.h
+     endif
+ endif
+ 
+@@ -1001,7 +1001,7 @@ else
+ endif
+ 
+ # Using += instead of =, so that CPPFLAGS can be set per sketch level
+-CPPFLAGS      += -$(MCU_FLAG_NAME)=$(MCU) -DF_CPU=$(F_CPU) -DARDUINO=$(ARDUINO_VERSION) $(ARDUINO_ARCH_FLAG) -D__PROG_TYPES_COMPAT__ \
++CPPFLAGS      +=  -DF_CPU=$(F_CPU) -DARDUINO=$(ARDUINO_VERSION) $(ARDUINO_ARCH_FLAG) -D__PROG_TYPES_COMPAT__ \
+         -I$(ARDUINO_CORE_PATH) -I$(ARDUINO_VAR_PATH)/$(VARIANT) \
+         $(SYS_INCLUDES) $(PLATFORM_INCLUDES) $(USER_INCLUDES) -Wall -ffunction-sections \
+         -fdata-sections
+@@ -1036,7 +1036,7 @@ endif
+ CFLAGS        += $(CFLAGS_STD)
+ CXXFLAGS      += -fno-exceptions $(CXXFLAGS_STD)
+ ASFLAGS       += -x assembler-with-cpp
+-LDFLAGS       += -$(MCU_FLAG_NAME)=$(MCU) -Wl,--gc-sections -O$(OPTIMIZATION_LEVEL)
++LDFLAGS       += -Wl,--gc-sections -O$(OPTIMIZATION_LEVEL)
+ SIZEFLAGS     ?= --mcu=$(MCU) -C
+ 
+ # for backwards compatibility, grab ARDUINO_PORT if the user has it set
+@@ -1407,7 +1407,7 @@ pre-build:
+ 		$(call runscript_if_exists,$(PRE_BUILD_HOOK))
+ 
+ $(TARGET_ELF): 	$(LOCAL_OBJS) $(CORE_LIB) $(OTHER_OBJS)
+-		$(CC) $(LDFLAGS) -o $@ $(LOCAL_OBJS) $(CORE_LIB) $(OTHER_OBJS) -lc -lm $(LINKER_SCRIPTS)
++		$(CC) $(LDFLAGS) -o $@ $(LOCAL_OBJS) $(CORE_LIB) $(OTHER_OBJS) -lc -lm
+ 
+ $(CORE_LIB):	$(CORE_OBJS) $(LIB_OBJS) $(PLATFORM_LIB_OBJS) $(USER_LIB_OBJS)
+ 		$(AR) rcs $@ $(CORE_OBJS) $(LIB_OBJS) $(PLATFORM_LIB_OBJS) $(USER_LIB_OBJS)
+diff --git a/Teensy.mk b/Teensy.mk
+index 8a441e7..6682de2 100644
+--- a/Teensy.mk
++++ b/Teensy.mk
+@@ -34,8 +34,8 @@ endif
+ include $(ARDMK_DIR)/Common.mk
+ 
+ VENDOR              = teensy
+-ARDUINO_CORE_PATH   = $(ARDUINO_DIR)/hardware/teensy/cores/teensy3
+-BOARDS_TXT          = $(ARDUINO_DIR)/hardware/$(VENDOR)/boards.txt
++ARDUINO_CORE_PATH   = $(ARDUINO_DIR)/hardware/teensy/avr/cores/teensy3
++BOARDS_TXT          = $(ARDUINO_DIR)/hardware/$(VENDOR)/avr/boards.txt
+ 
+ ifndef F_CPU
+     F_CPU=96000000
+@@ -46,8 +46,9 @@ ifndef PARSE_TEENSY
+     PARSE_TEENSY = $(shell grep -v "^\#" "$(BOARDS_TXT)" | grep $(1).$(2) | cut -d = -f 2,3 )
+ endif
+ 
+-ARCHITECTURE  = $(call PARSE_TEENSY,$(BOARD_TAG),build.architecture)
+-AVR_TOOLS_DIR = $(call dir_if_exists,$(ARDUINO_DIR)/hardware/tools/$(ARCHITECTURE))
++TOOL_CHAIN  = $(call PARSE_TEENSY,$(BOARD_TAG),build.toolchain)
++ARCHITECTURE  = arm
++AVR_TOOLS_DIR = $(call dir_if_exists,$(ARDUINO_DIR)/$(TOOL_CHAIN))
+ 
+ ########################################################################
+ # command names
+@@ -126,7 +127,7 @@ endif
+ 
+ # processor stuff
+ ifndef MCU
+-    MCU := $(call PARSE_TEENSY,$(BOARD_TAG),build.cpu)
++    MCU := $(call PARSE_TEENSY,$(BOARD_TAG),build.flags)
+ endif
+ 
+ ifndef MCU_FLAG_NAME
+@@ -141,7 +142,11 @@ endif
+ 
+ CPPFLAGS += -DLAYOUT_US_ENGLISH -D$(USB_TYPE)
+ 
+-CPPFLAGS += $(call PARSE_TEENSY,$(BOARD_TAG),build.option)
++CPPFLAGS += $(call PARSE_TEENSY,$(BOARD_TAG),build.flags.common)
++CPPFLAGS += $(call PARSE_TEENSY,$(BOARD_TAG),build.flags.cpu)
++CPPFLAGS += $(call PARSE_TEENSY,$(BOARD_TAG),build.flags.optimize)
++CPPFLAGS += $(call PARSE_TEENSY,$(BOARD_TAG),build.flags.defs)
++CPPFLAGS += $(call PARSE_TEENSY,$(BOARD_TAG),build.flags.cpp)
+ 
+ CXXFLAGS += $(call PARSE_TEENSY,$(BOARD_TAG),build.cppoption)
+ ifeq ("$(call PARSE_TEENSY,$(BOARD_TAG),build.gnu0x)","true")
+@@ -153,10 +158,13 @@ ifeq ("$(call PARSE_TEENSY,$(BOARD_TAG),build.elide_constructors)", "true")
+ endif
+ 
+ LDFLAGS +=  $(call PARSE_TEENSY,$(BOARD_TAG),build.linkoption) $(call PARSE_TEENSY,$(BOARD_TAG),build.additionalobject)
++#LDFLAGS +=  $(call PARSE_TEENSY,$(BOARD_TAG),build.flags.ld)
++LDFLAGS +=  -Wl,--gc-sections,--relax -T$(ARDUINO_CORE_PATH)/mk20dx256.ld
++LDFLAGS +=  $(call PARSE_TEENSY,$(BOARD_TAG),build.flags.libs)
+ 
+-ifneq ("$(call PARSE_TEENSY,$(BOARD_TAG),build.linkscript)",)
+-    LDFLAGS   += -T$(ARDUINO_CORE_PATH)/$(call PARSE_TEENSY,$(BOARD_TAG),build.linkscript)
+-endif
++#ifneq ("$(call PARSE_TEENSY,$(BOARD_TAG),build.linkscript)",)
++#    LDFLAGS   += -T$(ARDUINO_CORE_PATH)/$(call PARSE_TEENSY,$(BOARD_TAG),build.linkscript)
++#endif
+ 
+ ########################################################################
+ # some fairly odd settings so that 'make upload' works
+-- 
+1.9.1
+
