@@ -11,6 +11,9 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+Joseph Andly Koola
+josephandly@gmail.com
 */
 
 #include "SPI.h"
@@ -30,19 +33,78 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #ifdef USE_HW_SPI
 /*in HW SPI other lines are hardware controlled. refer arduino pinout*/
-Adafruit_ILI9340 lcdObj = Adafruit_ILI9340(SPI_LCD_CS, SPI_LCD_DC, SPI_LCD_RST);
+static Adafruit_ILI9340 lcdObj = Adafruit_ILI9340(SPI_LCD_CS, SPI_LCD_DC, SPI_LCD_RST);
 #else
 /* in software SPI all lines are bitbanged in SW*/
-Adafruit_ILI9340 lcdObj = Adafruit_ILI9340(SPI_LCD_CS, SPI_LCD_DC, SPI_MOSI, SPI_CLOCK, SPI_LCD_RST, SPI_MISO);
+static Adafruit_ILI9340 lcdObj = Adafruit_ILI9340(SPI_LCD_CS, SPI_LCD_DC, SPI_MOSI, SPI_CLOCK, SPI_LCD_RST, SPI_MISO);
 #endif
+
+static uint8_t curLcdOrientation = 0;
+
+/*char height is multiple of 8 starting with 8 pixels when 1*/
+#define BOOT_TEXT_SIZE	1
+
+/*maximum no. lines in landscape with font size 8 pixels (320/8)*/
+#define MAX_LINES_LANDSCAPE	40
+/*maximum no. lines in portrait with font size 8 pixels (240/8)*/
+#define MAX_LINES_PORTRAIT	30
+
+
+/*This function fakes a progress by dots with fixed delay*/
+void showFakeDotProgress(uint16_t count, uint16_t delayMs)
+{
+	int i;
+	for(i=0; i<count; i++)
+	{
+		lcdObj.printf(".");
+		delay(delayMs);
+	}
+}
+
+void showFakeBootLog()
+{
+	int linei;
+	uint8_t linesCount;
+	lcdObj.fillScreen(ILI9340_BLACK);
+	lcdObj.setCursor(0, 0);
+	lcdObj.setTextColor(ILI9340_WHITE);
+	lcdObj.setTextSize(BOOT_TEXT_SIZE);
+	/*find no. of lines from orientation*/
+	if(curLcdOrientation & 1)
+		linesCount = (MAX_LINES_PORTRAIT/BOOT_TEXT_SIZE);
+	else
+		linesCount = (MAX_LINES_LANDSCAPE/BOOT_TEXT_SIZE);
+
+
+	lcdObj.printf("Waiting for Devices");
+	showFakeDotProgress(6, 300);
+	for(linei=0; linei<50; linei++)
+	{
+		if(!(linei % linesCount))
+		{
+			lcdObj.fillScreen(ILI9340_BLACK);
+			lcdObj.setCursor(0, 0);
+		}
+
+		lcdObj.printf("line %d\n", linei);
+	}
+
+}
 
 void setup()
 {
 	/*initialize serial port for debug prints*/
 	Serial.begin(9600);
 	/*initialize the lcd moduel*/
+	Serial.printf("jak:> initializing LCD!\n");
 	lcdObj.begin();
-	lcdObj.fillScreen(ILI9340_BLACK);
+	for(int i=0; i<4; i++)
+	{
+		lcdObj.setRotation(i);
+		curLcdOrientation = i;
+		showFakeBootLog();
+	}
+
 }
 
 
