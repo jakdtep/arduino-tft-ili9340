@@ -20,6 +20,8 @@ josephandly@gmail.com
 #include "Adafruit_GFX.h"
 #include "Adafruit_ILI9340.h"
 
+#include "linux_boot_log.h"
+
 #define USE_HW_SPI
 
 /*defines the SPI HW GPIOs for the lcd module*/
@@ -64,7 +66,7 @@ void showFakeDotProgress(uint16_t count, uint16_t delayMs)
 void showFakeBootLog()
 {
 	int linei;
-	uint8_t linesCount;
+	uint8_t linesCount, logLines;
 	lcdObj.fillScreen(ILI9340_BLACK);
 	lcdObj.setCursor(0, 0);
 	lcdObj.setTextColor(ILI9340_WHITE);
@@ -74,19 +76,25 @@ void showFakeBootLog()
 		linesCount = (MAX_LINES_PORTRAIT/BOOT_TEXT_SIZE);
 	else
 		linesCount = (MAX_LINES_LANDSCAPE/BOOT_TEXT_SIZE);
-
+	logLines =  sizeof(linuxBootLogStr)/LINUX_BOOT_LOG_LINE_WIDTH;
 
 	lcdObj.printf("Waiting for Devices");
 	showFakeDotProgress(6, 300);
-	for(linei=0; linei<50; linei++)
+	lcdObj.printf("\n");
+	lcdObj.printf("Uncompressing Linux");
+	showFakeDotProgress(50, 100);
+	lcdObj.printf("\n");
+	for(linei=0; linei<logLines; linei++)
 	{
-		if(!(linei % linesCount))
+		if(!(linei % linesCount) && linei)
 		{
 			lcdObj.fillScreen(ILI9340_BLACK);
 			lcdObj.setCursor(0, 0);
+			delay(linei);
 		}
 
-		lcdObj.printf("line %d\n", linei);
+		lcdObj.printf("%s\n", linuxBootLogStr[linei]);
+		delay(linei%50);
 	}
 
 }
