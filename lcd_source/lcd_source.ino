@@ -21,6 +21,7 @@ josephandly@gmail.com
 #include "Adafruit_ILI9340.h"
 
 #include "linux_boot_log.h"
+#include "disp_info_objects.h"
 
 #define USE_HW_SPI
 
@@ -51,6 +52,8 @@ static uint8_t curLcdOrientation = 0;
 /*maximum no. lines in portrait with font size 8 pixels (240/8)*/
 #define MAX_LINES_PORTRAIT	30
 
+static ProgressBar pgBar1;
+static ProgressBar pgBar2;
 
 /*This function fakes a progress by dots with fixed delay*/
 void showFakeDotProgress(uint16_t count, uint16_t delayMs)
@@ -105,17 +108,48 @@ void setup()
 	Serial.begin(9600);
 	/*initialize the lcd moduel*/
 	Serial.printf("jak:> initializing LCD!\n");
+	SPI.setSCK(14);
+
 	lcdObj.begin();
-	for(int i=0; i<4; i++)
+	lcdObj.fillScreen(ILI9340_BLACK);
+	
+	for(int i=3; i<4; i++)
 	{
 		lcdObj.setRotation(i);
 		curLcdOrientation = i;
 		showFakeBootLog();
 	}
+	delay(1000);
+	lcdObj.fillScreen(ILI9340_BLACK);
 
+	pgBar1.x = 10;
+	pgBar1.y = 160;
+	pgBar1.width = 100;
+	pgBar1.height = 25;
+	pgBar1.brdColor = ILI9340_BLUE;
+	pgBar1.color = ILI9340_RED;
+	pgBar1.bgColor = ILI9340_GREEN;
+
+	createProgressBar(&lcdObj, &pgBar1);
+	
+	pgBar2.x = 10;
+	pgBar2.y = 40;
+	pgBar2.width = 150;
+	pgBar2.height = 25;
+	pgBar2.brdColor = ILI9340_YELLOW;
+	pgBar2.color = ILI9340_BLUE;
+	pgBar2.bgColor = ILI9340_RED;
+
+	createProgressBar(&lcdObj, &pgBar2);
 }
 
 
 void loop()
 {
+	unsigned long time = micros();
+	pgBar1.value = time%100;
+	pgBar2.value = time%100;
+	updateProgressBar(&lcdObj, &pgBar1);
+	updateProgressBar(&lcdObj, &pgBar2);
+	delay(50);
 }
