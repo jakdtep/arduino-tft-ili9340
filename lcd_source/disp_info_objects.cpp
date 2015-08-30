@@ -90,3 +90,60 @@ uint8_t updateProgressBar(Adafruit_ILI9340 *lcd, ProgressBar *pBar)
 uint8_t deleteProgressBar(Adafruit_ILI9340 *lcd, ProgressBar *pBar)
 {
 }
+
+uint8_t drawIcon(Adafruit_ILI9340 *lcd, Icon *pIcon)
+{	
+	uint16_t width, height, x, y;
+	uint16_t bmX, bmY;
+	width = pIcon->width;
+	height = pIcon->height;
+	x = pIcon->x;
+	y = pIcon->y;
+
+	if(x > ILI9340_TFTWIDTH || y > ILI9340_TFTHEIGHT)
+		return DISP_ERR;
+
+	/*correct to the limiting values if needed*/
+	if(width < PBAR_MIN_WIDTH)
+		width = PBAR_MIN_WIDTH;
+	
+	if(x+width > ILI9340_TFTWIDTH)
+		width = ILI9340_TFTWIDTH - x;
+
+	if(height < PBAR_MIN_HEIGHT)
+		height = PBAR_MIN_HEIGHT;
+
+	if(y+height > ILI9340_TFTHEIGHT)
+		height = ILI9340_TFTHEIGHT - y;
+	
+	bmX = x;
+	bmY = y;
+
+	if(pIcon->brdColor)
+	{
+		/*draw the borders with respective thickness*/
+		for(int i=0; i<ICON_BRD_THICK; i++)
+			lcd->drawFastHLine(x, y+i, width+ICON_BRD_THICK, pIcon->brdColor);
+		for(int i=0; i<ICON_BRD_THICK; i++)
+			lcd->drawFastHLine(x, y+height+i+ICON_BRD_THICK, width+ICON_BRD_THICK,
+					pIcon->brdColor);
+		for(int i=0; i<ICON_BRD_THICK; i++)
+			lcd->drawFastVLine(x+i, y, height+ICON_BRD_THICK, pIcon->brdColor);
+		for(int i=0; i<ICON_BRD_THICK; i++)
+			lcd->drawFastVLine(x+width+i+ICON_BRD_THICK, y, height+ICON_BRD_THICK*2, 
+					pIcon->brdColor);
+		bmX = x + ICON_BRD_THICK;
+		bmY = y + ICON_BRD_THICK;
+	}
+
+	/*draw the icon bitmap*/
+	lcd->setAddrWindow(bmX, bmY,
+		       	bmX+width-1, bmY+height);
+
+	for(int i=0; i<height; i++)
+		for(int j=0; j<width; j++)
+			lcd->pushColor(pIcon->rgb565Data[i*(width)+j]);
+
+	return DISP_SUCCESS;
+}
+

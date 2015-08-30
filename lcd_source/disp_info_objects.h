@@ -30,6 +30,8 @@ josephandly@gmail.com
 #define PBAR_MIN_WIDTH	(PBAR_BRD_THICK*5)
 #define PBAR_MIN_HEIGHT	(PBAR_BRD_THICK*5)
 
+#define ICON_BRD_THICK	3
+
 
 /*progrss bar object*/
 typedef struct progress
@@ -41,9 +43,27 @@ typedef struct progress
 	uint16_t color, bgColor, brdColor;
 }ProgressBar;
 
+/*icon object*/
+typedef struct icon
+{
+	uint16_t x,y;/*top left corner*/
+	/*following dimensions exclude borders*/
+	uint16_t width, height;
+	uint16_t vertical;
+	/*pixel data in rgb565 format*/
+	const uint16_t *rgb565Data;
+	/*if bgColor is non zero it is filed
+	  instead of transparency*/
+	uint16_t  bgColor;
+	/*if brdColor is non zero border will be drawn*/
+        uint16_t  brdColor;
+}Icon;
+
+
 
 uint8_t createProgressBar(Adafruit_ILI9340 *lcd, ProgressBar *pBar);
 uint8_t updateProgressBar(Adafruit_ILI9340 *lcd, ProgressBar *pBar);
 uint8_t deleteProgressBar(Adafruit_ILI9340 *lcd, ProgressBar *pBar);
 
+uint8_t drawIcon(Adafruit_ILI9340 *lcd, Icon *pIcon);
 #endif
