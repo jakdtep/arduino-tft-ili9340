@@ -20,6 +20,7 @@ josephandly@gmail.com
 #include "Adafruit_GFX.h"
 #include "Adafruit_ILI9340.h"
 
+#include "linux_boot_log.h"
 #include "disp_info_objects.h"
 
 /*Software SPI constructor*/
@@ -90,6 +91,51 @@ int8_t LcdDev::clearScreen()
 	return DISP_SUCCESS;
 }
 
+/*This function fakes a progress by dots with fixed delay*/
+void LcdDev::showFakeDotProgress(uint16_t count, uint16_t delayMs)
+{
+	int i;
+	for(i=0; i<count; i++)
+	{
+		printf(".");
+		delay(delayMs);
+	}
+}
+
+void LcdDev::showFakeBootLog()
+{
+	int linei;
+	uint8_t linesCount, logLines;
+	fillScreen(ILI9340_BLACK);
+	setCursor(0, 0);
+	setTextColor(ILI9340_WHITE);
+	setTextSize(BOOT_TEXT_SIZE);
+	/*find no. of lines from orientation*/
+	if(curOrientation == 90 || curOrientation == 90) 
+		linesCount = (MAX_LINES_PORTRAIT/BOOT_TEXT_SIZE);
+	else
+		linesCount = (MAX_LINES_LANDSCAPE/BOOT_TEXT_SIZE);
+	logLines =  sizeof(linuxBootLogStr)/LINUX_BOOT_LOG_LINE_WIDTH;
+
+	printf("Waiting for Devices");
+	showFakeDotProgress(6, 300);
+	printf("\n");
+	printf("Uncompressing Linux");
+	showFakeDotProgress(50, 100);
+	printf("\n");
+	for(linei=0; linei<logLines; linei++)
+	{
+		if(!(linei % linesCount) && linei)
+		{
+			fillScreen(ILI9340_BLACK);
+			setCursor(0, 0);
+			delay(linei);
+		}
+
+		printf("%s\n", linuxBootLogStr[linei]);
+		delay(linei%50);
+	}
+}
 
 int8_t createProgressBar(LcdDev *devLcd, ProgressBar *pBar)
 {

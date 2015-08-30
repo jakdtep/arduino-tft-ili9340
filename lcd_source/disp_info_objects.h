@@ -22,6 +22,13 @@ josephandly@gmail.com
 #include "Adafruit_GFX.h"
 #include "Adafruit_ILI9340.h"
 
+/*char height is multiple of 8 starting with 8 pixels when 1*/
+#define BOOT_TEXT_SIZE  1 
+/*maximum no. lines in landscape with font size 8 pixels (320/8)*/
+#define MAX_LINES_LANDSCAPE     (ILI9340_TFTHEIGHT/(8*BOOT_TEXT_SIZE))
+/*maximum no. lines in portrait with font size 8 pixels (240/8)*/
+#define MAX_LINES_PORTRAIT      (ILI9340_TFTWIDTH/(8*BOOT_TEXT_SIZE))
+
 #define DISP_ERR	-1
 #define DISP_SUCCESS	0
 
@@ -48,7 +55,9 @@ public:
 	uint8_t curWidth;
 	uint8_t curHeight;
 	uint16_t curBgColor;
-
+	
+	void showFakeDotProgress(uint16_t count, uint16_t delayMs);
+	void showFakeBootLog();
 	int8_t clearScreen();
 	int8_t rotateScreen(int16_t);
 }LcdDev;
