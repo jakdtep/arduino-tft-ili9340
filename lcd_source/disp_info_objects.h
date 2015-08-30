@@ -32,6 +32,27 @@ josephandly@gmail.com
 
 #define ICON_BRD_THICK	3
 
+/*wrapper object for LCD. stores current information.
+ create the object with Adafruit LCD object (hwSPI or swSPI) and initial parameters
+ This object is supposed to be global in main program*/
+typedef class LcdDev: public Adafruit_ILI9340{
+public:
+	/*Software SPI constructor*/
+	LcdDev(uint8_t CS, uint8_t RS, uint8_t MOSI, uint8_t SCLK,
+		uint8_t RST, uint8_t MISO,
+		uint16_t orientation, uint16_t bgColor);
+	/*Hardware SPI constructor*/
+	LcdDev(uint8_t CS, uint8_t RS, uint8_t RST, uint16_t orientation, uint16_t bgColor);
+
+	int8_t	curOrientation;
+	uint8_t curWidth;
+	uint8_t curHeight;
+	uint16_t curBgColor;
+
+	int8_t clearScreen();
+	int8_t rotateScreen(int16_t);
+}LcdDev;
+
 
 /*progrss bar object*/
 typedef struct progress
@@ -60,10 +81,9 @@ typedef struct icon
 }Icon;
 
 
+int8_t createProgressBar(LcdDev *lcd, ProgressBar *pBar);
+int8_t updateProgressBar(LcdDev *lcd, ProgressBar *pBar);
+int8_t deleteProgressBar(LcdDev *lcd, ProgressBar *pBar);
 
-uint8_t createProgressBar(Adafruit_ILI9340 *lcd, ProgressBar *pBar);
-uint8_t updateProgressBar(Adafruit_ILI9340 *lcd, ProgressBar *pBar);
-uint8_t deleteProgressBar(Adafruit_ILI9340 *lcd, ProgressBar *pBar);
-
-uint8_t drawIcon(Adafruit_ILI9340 *lcd, Icon *pIcon);
+int8_t drawIcon(LcdDev *lcd, Icon *pIcon);
 #endif

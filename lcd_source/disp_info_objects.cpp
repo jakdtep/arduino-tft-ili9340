@@ -22,7 +22,76 @@ josephandly@gmail.com
 
 #include "disp_info_objects.h"
 
-uint8_t createProgressBar(Adafruit_ILI9340 *lcd, ProgressBar *pBar)
+/*Software SPI constructor*/
+LcdDev::LcdDev(uint8_t CS, uint8_t RS, uint8_t MOSI, uint8_t SCLK,
+       uint8_t RST, uint8_t MISO,
+       uint16_t orientation, uint16_t bgColor)
+	:Adafruit_ILI9340(CS, RS, MOSI, SCLK, RST, MISO)
+{
+	curOrientation = orientation;
+	curBgColor = bgColor;
+	
+	begin();
+	rotateScreen(curOrientation);
+}
+
+/*Hardware SPI constructor*/
+LcdDev::LcdDev(uint8_t CS, uint8_t RS, uint8_t RST, uint16_t orientation, uint16_t bgColor)
+	:Adafruit_ILI9340(CS, RS, RST)
+{
+	curOrientation = orientation;
+	curBgColor = bgColor;
+	
+	begin();
+	rotateScreen(curOrientation);
+}
+
+int8_t LcdDev::rotateScreen(int16_t degree)
+{
+	switch(degree)
+	{
+		case 0:
+			setRotation(0);
+			curOrientation = 0;
+			curWidth = ILI9340_TFTWIDTH;
+			curHeight = ILI9340_TFTHEIGHT;
+			break;
+		case 90:
+			setRotation(1);
+			curOrientation = 90;
+			curHeight = ILI9340_TFTWIDTH;
+			curWidth = ILI9340_TFTHEIGHT;
+			break;
+		case 180:
+			setRotation(3);
+			curOrientation = 180;
+			curWidth = ILI9340_TFTWIDTH;
+			curHeight = ILI9340_TFTHEIGHT;
+			break;
+		case 270:
+			setRotation(4);
+			curOrientation = 270;
+			curHeight = ILI9340_TFTWIDTH;
+			curWidth = ILI9340_TFTHEIGHT;
+			break;
+		default:
+			setRotation(0);
+			curOrientation = 0;
+			curWidth = ILI9340_TFTWIDTH;
+			curHeight = ILI9340_TFTHEIGHT;
+			break;
+	}
+	return DISP_SUCCESS;
+}
+
+int8_t LcdDev::clearScreen()
+{
+	fillScreen(curBgColor);
+	return DISP_SUCCESS;
+}
+
+
+int8_t createProgressBar(LcdDev *devLcd, ProgressBar *pBar)
 {
 	uint16_t width, height, x, y;
 	width = pBar->width;
@@ -36,7 +105,7 @@ uint8_t createProgressBar(Adafruit_ILI9340 *lcd, ProgressBar *pBar)
 	/*correct to the limiting values if needed*/
 	if(width < PBAR_MIN_WIDTH)
 		width = PBAR_MIN_WIDTH;
-	
+
 	if(x+width > ILI9340_TFTWIDTH)
 		width = ILI9340_TFTWIDTH - x;
 
@@ -48,19 +117,20 @@ uint8_t createProgressBar(Adafruit_ILI9340 *lcd, ProgressBar *pBar)
 	
 	/*draw the borders with respective thickness*/
 	for(int i=0; i<PBAR_BRD_THICK; i++)
-		lcd->drawFastHLine(x, y+i, width, pBar->brdColor);
+		devLcd->drawFastHLine(x, y+i, width, pBar->brdColor);
 	for(int i=0; i<PBAR_BRD_THICK; i++)
-		lcd->drawFastHLine(x, y+height+i-PBAR_BRD_THICK, width, pBar->brdColor);
+		devLcd->drawFastHLine(x, y+height+i-PBAR_BRD_THICK, width, pBar->brdColor);
 	for(int i=0; i<PBAR_BRD_THICK; i++)
-		lcd->drawFastVLine(x+i, y, height, pBar->brdColor);
+		devLcd->drawFastVLine(x+i, y, height, pBar->brdColor);
 	for(int i=0; i<PBAR_BRD_THICK; i++)
-		lcd->drawFastVLine(x+width+i-PBAR_BRD_THICK, y, height, pBar->brdColor);
+		devLcd->drawFastVLine(x+width+i-PBAR_BRD_THICK, y, height, pBar->brdColor);
 	/*fill the background*/
-	lcd->fillRect(x+PBAR_BRD_THICK, y+PBAR_BRD_THICK, width-PBAR_BRD_THICK*2, height-PBAR_BRD_THICK*2, pBar->bgColor);
+	devLcd->fillRect(x+PBAR_BRD_THICK, y+PBAR_BRD_THICK, width-PBAR_BRD_THICK*2, height-PBAR_BRD_THICK*2, pBar->bgColor);
 
 	return DISP_SUCCESS;
 }
-uint8_t updateProgressBar(Adafruit_ILI9340 *lcd, ProgressBar *pBar)
+
+int8_t updateProgressBar(LcdDev *devLcd, ProgressBar *pBar)
 {
 	uint8_t val = pBar->value;
 	uint16_t width, height, x, y;
@@ -77,21 +147,21 @@ uint8_t updateProgressBar(Adafruit_ILI9340 *lcd, ProgressBar *pBar)
 	progWidth = (uint16_t)((float)width*val/100.0);
 
 	/*fill the progress*/
-	lcd->fillRect(x+PBAR_BRD_THICK+1, y+PBAR_BRD_THICK+1, 
+	devLcd->fillRect(x+PBAR_BRD_THICK+1, y+PBAR_BRD_THICK+1, 
 		progWidth-(PBAR_BRD_THICK*2)-1, height-(PBAR_BRD_THICK+1)*2, pBar->color);
 	
 	/*fill the background*/
-	lcd->fillRect(x+PBAR_BRD_THICK+1+progWidth, y+PBAR_BRD_THICK, 
+	devLcd->fillRect(x+PBAR_BRD_THICK+1+progWidth, y+PBAR_BRD_THICK, 
 		width-progWidth-PBAR_BRD_THICK*2, height-PBAR_BRD_THICK*2, 
 		pBar->bgColor);
 	
 	return DISP_SUCCESS;
 }
-uint8_t deleteProgressBar(Adafruit_ILI9340 *lcd, ProgressBar *pBar)
+int8_t deleteProgressBar(LcdDev *devLcd, ProgressBar *pBar)
 {
 }
 
-uint8_t drawIcon(Adafruit_ILI9340 *lcd, Icon *pIcon)
+int8_t drawIcon(LcdDev *devLcd, Icon *pIcon)
 {	
 	uint16_t width, height, x, y;
 	uint16_t bmX, bmY;
@@ -123,26 +193,26 @@ uint8_t drawIcon(Adafruit_ILI9340 *lcd, Icon *pIcon)
 	{
 		/*draw the borders with respective thickness*/
 		for(int i=0; i<ICON_BRD_THICK; i++)
-			lcd->drawFastHLine(x, y+i, width+ICON_BRD_THICK, pIcon->brdColor);
+			devLcd->drawFastHLine(x, y+i, width+ICON_BRD_THICK, pIcon->brdColor);
 		for(int i=0; i<ICON_BRD_THICK; i++)
-			lcd->drawFastHLine(x, y+height+i+ICON_BRD_THICK, width+ICON_BRD_THICK,
+			devLcd->drawFastHLine(x, y+height+i+ICON_BRD_THICK, width+ICON_BRD_THICK,
 					pIcon->brdColor);
 		for(int i=0; i<ICON_BRD_THICK; i++)
-			lcd->drawFastVLine(x+i, y, height+ICON_BRD_THICK, pIcon->brdColor);
+			devLcd->drawFastVLine(x+i, y, height+ICON_BRD_THICK, pIcon->brdColor);
 		for(int i=0; i<ICON_BRD_THICK; i++)
-			lcd->drawFastVLine(x+width+i+ICON_BRD_THICK, y, height+ICON_BRD_THICK*2, 
+			devLcd->drawFastVLine(x+width+i+ICON_BRD_THICK, y, height+ICON_BRD_THICK*2, 
 					pIcon->brdColor);
 		bmX = x + ICON_BRD_THICK;
 		bmY = y + ICON_BRD_THICK;
 	}
 
 	/*draw the icon bitmap*/
-	lcd->setAddrWindow(bmX, bmY,
+	devLcd->setAddrWindow(bmX, bmY,
 		       	bmX+width-1, bmY+height);
 
 	for(int i=0; i<height; i++)
 		for(int j=0; j<width; j++)
-			lcd->pushColor(pIcon->rgb565Data[i*(width)+j]);
+			devLcd->pushColor(pIcon->rgb565Data[i*(width)+j]);
 
 	return DISP_SUCCESS;
 }
