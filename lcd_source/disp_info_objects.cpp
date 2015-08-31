@@ -40,11 +40,10 @@ LcdDev::LcdDev(uint8_t CS, uint8_t RS, uint8_t MOSI, uint8_t SCLK,
 LcdDev::LcdDev(uint8_t CS, uint8_t RS, uint8_t RST, uint16_t orientation, uint16_t bgColor)
 	:Adafruit_ILI9340(CS, RS, RST)
 {
-	curOrientation = orientation;
 	curBgColor = bgColor;
 	
 	begin();
-	rotateScreen(curOrientation);
+	rotateScreen(orientation);
 }
 
 int8_t LcdDev::rotateScreen(int16_t degree)
@@ -64,13 +63,13 @@ int8_t LcdDev::rotateScreen(int16_t degree)
 			curWidth = ILI9340_TFTHEIGHT;
 			break;
 		case 180:
-			setRotation(3);
+			setRotation(2);
 			curOrientation = 180;
 			curWidth = ILI9340_TFTWIDTH;
 			curHeight = ILI9340_TFTHEIGHT;
 			break;
 		case 270:
-			setRotation(4);
+			setRotation(3);
 			curOrientation = 270;
 			curHeight = ILI9340_TFTWIDTH;
 			curWidth = ILI9340_TFTHEIGHT;
@@ -145,21 +144,21 @@ int8_t createProgressBar(LcdDev *devLcd, ProgressBar *pBar)
 	x = pBar->x;
 	y = pBar->y;
 
-	if(x > ILI9340_TFTWIDTH || y > ILI9340_TFTHEIGHT)
+	if(x > devLcd->curWidth || y > devLcd->curHeight)
 		return DISP_ERR;
 
 	/*correct to the limiting values if needed*/
 	if(width < PBAR_MIN_WIDTH)
 		width = PBAR_MIN_WIDTH;
 
-	if(x+width > ILI9340_TFTWIDTH)
-		width = ILI9340_TFTWIDTH - x;
+	if(x+width > devLcd->curWidth)
+		width = devLcd->curWidth - x;
 
 	if(height < PBAR_MIN_HEIGHT)
 		height = PBAR_MIN_HEIGHT;
 
-	if(y+height > ILI9340_TFTHEIGHT)
-		height = ILI9340_TFTHEIGHT - y;
+	if(y+height > devLcd->curHeight)
+		height = devLcd->curHeight - y;
 	
 	/*draw the borders with respective thickness*/
 	for(int i=0; i<PBAR_BRD_THICK; i++)
@@ -205,6 +204,7 @@ int8_t updateProgressBar(LcdDev *devLcd, ProgressBar *pBar)
 }
 int8_t deleteProgressBar(LcdDev *devLcd, ProgressBar *pBar)
 {
+	return DISP_SUCCESS;
 }
 
 int8_t drawIcon(LcdDev *devLcd, Icon *pIcon)
@@ -216,21 +216,21 @@ int8_t drawIcon(LcdDev *devLcd, Icon *pIcon)
 	x = pIcon->x;
 	y = pIcon->y;
 
-	if(x > ILI9340_TFTWIDTH || y > ILI9340_TFTHEIGHT)
+	if(x > devLcd->curWidth || y > devLcd->curHeight)
 		return DISP_ERR;
 
 	/*correct to the limiting values if needed*/
 	if(width < PBAR_MIN_WIDTH)
 		width = PBAR_MIN_WIDTH;
 	
-	if(x+width > ILI9340_TFTWIDTH)
-		width = ILI9340_TFTWIDTH - x;
+	if(x+width > devLcd->curWidth)
+		width = devLcd->curWidth - x;
 
 	if(height < PBAR_MIN_HEIGHT)
 		height = PBAR_MIN_HEIGHT;
 
-	if(y+height > ILI9340_TFTHEIGHT)
-		height = ILI9340_TFTHEIGHT - y;
+	if(y+height > devLcd->curHeight)
+		height = devLcd->curHeight - y;
 	
 	bmX = x;
 	bmY = y;

@@ -51,9 +51,9 @@ public:
 	/*Hardware SPI constructor*/
 	LcdDev(uint8_t CS, uint8_t RS, uint8_t RST, uint16_t orientation, uint16_t bgColor);
 
-	int8_t	curOrientation;
-	uint8_t curWidth;
-	uint8_t curHeight;
+	int16_t	curOrientation;
+	uint16_t curWidth;
+	uint16_t curHeight;
 	uint16_t curBgColor;
 	
 	void showFakeDotProgress(uint16_t count, uint16_t delayMs);
