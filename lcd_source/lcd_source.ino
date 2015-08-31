@@ -37,11 +37,11 @@ josephandly@gmail.com
 #ifdef USE_HW_SPI
 /*in HW SPI other lines are hardware controlled. refer arduino pinout*/
 static LcdDev lcdDevObj = LcdDev(SPI_LCD_CS, SPI_LCD_DC, SPI_LCD_RST,
-				90, ILI9340_BLACK);
+				90, ILI9340_WHITE);
 #else
 /* in software SPI all lines are bitbanged in SW*/
 static LcdDev lcdDevObj = LcdDev(SPI_LCD_CS, SPI_LCD_DC, SPI_MOSI, SPI_CLOCK, SPI_LCD_RST, SPI_MISO,
-				90, ILI9340_BLACK);
+				90, ILI9340_WHITE);
 #endif
 
 static ProgressBar pgBarHeat;
@@ -50,6 +50,7 @@ static ProgressBar pgBarMic;
 static Icon	iconHeat;
 static Icon	iconBulb;
 static Icon	iconMic;
+static Icon	iconLogo;
 
 void setup()
 {
@@ -98,12 +99,21 @@ void setup()
 
 	createProgressBar(&lcdDevObj, &pgBarMic);
 
+	iconLogo.x = 0;
+	iconLogo.y = 0;
+	iconLogo.width = logo.width;
+	iconLogo.height = logo.height;
+	iconLogo.rgb565Data = (const uint16_t*)logo.pixel_data;
+	iconLogo.brdColor = 0;	
+	
+	drawIcon(&lcdDevObj, &iconLogo);	
+	
 	iconHeat.x = 282;
 	iconHeat.y = 126;
 	iconHeat.width = heat32x32.width;
 	iconHeat.height = heat32x32.height;
 	iconHeat.rgb565Data = (const uint16_t*)heat32x32.pixel_data;
-	iconHeat.brdColor = ILI9340_BLUE;	
+	iconHeat.brdColor = 0;	
 	
 	drawIcon(&lcdDevObj, &iconHeat);
 	
@@ -112,7 +122,7 @@ void setup()
 	iconBulb.width = bulb32x32.width;
 	iconBulb.height = bulb32x32.height;
 	iconBulb.rgb565Data = (const uint16_t*)bulb32x32.pixel_data;
-	iconBulb.brdColor = ILI9340_BLUE;	
+	iconBulb.brdColor = 0;	
 	
 	drawIcon(&lcdDevObj, &iconBulb);
 	
@@ -121,7 +131,7 @@ void setup()
 	iconMic.width = mic32x32.width;
 	iconMic.height = mic32x32.height;
 	iconMic.rgb565Data = (const uint16_t*)mic32x32.pixel_data;
-	iconMic.brdColor = ILI9340_BLUE;	
+	iconMic.brdColor = 0;	
 	
 	drawIcon(&lcdDevObj, &iconMic);
 }
