@@ -44,12 +44,12 @@ static LcdDev lcdDevObj = LcdDev(SPI_LCD_CS, SPI_LCD_DC, SPI_MOSI, SPI_CLOCK, SP
 				90, ILI9340_BLACK);
 #endif
 
-static ProgressBar pgBar1;
-static ProgressBar pgBar2;
-static ProgressBar pgBar3;
-static Icon	icon1;
-static Icon	icon2;
-static Icon	icon3;
+static ProgressBar pgBarHeat;
+static ProgressBar pgBarBulb;
+static ProgressBar pgBarMic;
+static Icon	iconHeat;
+static Icon	iconBulb;
+static Icon	iconMic;
 
 void setup()
 {
@@ -68,71 +68,73 @@ void setup()
 
 	lcdDevObj.clearScreen();
 
-	pgBar1.x = 0;
-	pgBar1.y = 120;
-	pgBar1.width = 320;
-	pgBar1.height = 25;
-	pgBar1.brdColor = ILI9340_BLUE;
-	pgBar1.color = ILI9340_RED;
-	pgBar1.bgColor = ILI9340_GREEN;
+	pgBarHeat.x = 2;
+	pgBarHeat.y = 132;
+	pgBarHeat.width = 276;
+	pgBarHeat.height = 25;
+	pgBarHeat.brdColor = ILI9340_GREEN;
+	pgBarHeat.color = ILI9340_RED;
+	pgBarHeat.bgColor = ILI9340_BLUE;
 
-	createProgressBar(&lcdDevObj, &pgBar1);
+	createProgressBar(&lcdDevObj, &pgBarHeat);
 	
-	pgBar2.x = 2;
-	pgBar2.y = 157;
-	pgBar2.width = 250;
-	pgBar2.height = 25;
-	pgBar2.brdColor = ILI9340_BLUE;
-	pgBar2.color = ILI9340_RED;
-	pgBar2.bgColor = ILI9340_GREEN;
+	pgBarBulb.x = 2;
+	pgBarBulb.y = 170;
+	pgBarBulb.width = 276;
+	pgBarBulb.height = 25;
+	pgBarBulb.brdColor = ILI9340_GREEN;
+	pgBarBulb.color = ILI9340_WHITE;
+	pgBarBulb.bgColor = ILI9340_BLACK;
 
-	createProgressBar(&lcdDevObj, &pgBar2);
+	createProgressBar(&lcdDevObj, &pgBarBulb);
 	
-	pgBar3.x = 2;
-	pgBar3.y = 194;
-	pgBar3.width = 250;
-	pgBar3.height = 25;
-	pgBar3.brdColor = ILI9340_YELLOW;
-	pgBar3.color = ILI9340_BLUE;
-	pgBar3.bgColor = ILI9340_RED;
+	pgBarMic.x = 2;
+	pgBarMic.y = 208;
+	pgBarMic.width = 276;
+	pgBarMic.height = 25;
+	pgBarMic.brdColor = ILI9340_GREEN;
+	pgBarMic.color = ILI9340_BLUE;
+	pgBarMic.bgColor = ILI9340_RED;
 
-	createProgressBar(&lcdDevObj, &pgBar3);
+	createProgressBar(&lcdDevObj, &pgBarMic);
 
-	icon1.x = 0;
-	icon1.y = 0;
-	icon1.width = heat32x32.width;
-	icon1.height = heat32x32.height;
-	icon1.rgb565Data = (const uint16_t*)heat32x32.pixel_data;
-	icon1.brdColor = ILI9340_BLUE;	
+	iconHeat.x = 282;
+	iconHeat.y = 126;
+	iconHeat.width = heat32x32.width;
+	iconHeat.height = heat32x32.height;
+	iconHeat.rgb565Data = (const uint16_t*)heat32x32.pixel_data;
+	iconHeat.brdColor = ILI9340_BLUE;	
 	
-	drawIcon(&lcdDevObj, &icon1);
+	drawIcon(&lcdDevObj, &iconHeat);
 	
-	icon2.x = 80;
-	icon2.y = 0;
-	icon2.width = bulb32x32.width;
-	icon2.height = bulb32x32.height;
-	icon2.rgb565Data = (const uint16_t*)bulb32x32.pixel_data;
-	icon2.brdColor = ILI9340_BLUE;	
+	iconBulb.x = 282;
+	iconBulb.y = 164;
+	iconBulb.width = bulb32x32.width;
+	iconBulb.height = bulb32x32.height;
+	iconBulb.rgb565Data = (const uint16_t*)bulb32x32.pixel_data;
+	iconBulb.brdColor = ILI9340_BLUE;	
 	
-	drawIcon(&lcdDevObj, &icon2);
+	drawIcon(&lcdDevObj, &iconBulb);
 	
-	icon3.x = 160;
-	icon3.y = 0;
-	icon3.width = mic32x32.width;
-	icon3.height = mic32x32.height;
-	icon3.rgb565Data = (const uint16_t*)mic32x32.pixel_data;
-	icon3.brdColor = ILI9340_BLUE;	
+	iconMic.x = 282;
+	iconMic.y = 202;
+	iconMic.width = mic32x32.width;
+	iconMic.height = mic32x32.height;
+	iconMic.rgb565Data = (const uint16_t*)mic32x32.pixel_data;
+	iconMic.brdColor = ILI9340_BLUE;	
 	
-	drawIcon(&lcdDevObj, &icon3);
+	drawIcon(&lcdDevObj, &iconMic);
 }
 
 
 void loop()
 {
 	unsigned long time = micros();
-	pgBar1.value = time%100;
-	pgBar2.value = time%100;
-	updateProgressBar(&lcdDevObj, &pgBar1);
-	updateProgressBar(&lcdDevObj, &pgBar2);
+	pgBarHeat.value = time%100;
+	pgBarBulb.value = time%100;
+	pgBarMic.value = time%100;
+	updateProgressBar(&lcdDevObj, &pgBarHeat);
+	updateProgressBar(&lcdDevObj, &pgBarBulb);
+	updateProgressBar(&lcdDevObj, &pgBarMic);
 	delay(50);
 }

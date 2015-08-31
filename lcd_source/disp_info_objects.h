@@ -37,7 +37,7 @@ josephandly@gmail.com
 #define PBAR_MIN_WIDTH	(PBAR_BRD_THICK*5)
 #define PBAR_MIN_HEIGHT	(PBAR_BRD_THICK*5)
 
-#define ICON_BRD_THICK	3
+#define ICON_BRD_THICK	2
 
 /*wrapper object for LCD. stores current information.
  create the object with Adafruit LCD object (hwSPI or swSPI) and initial parameters
