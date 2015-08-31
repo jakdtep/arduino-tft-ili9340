@@ -31,4 +31,8 @@ PASET -> page set (Y coordinates of the region)
 
 pushColor(pixel) can be used after this state to sequentially send region data pixel by pixel. This API doesnot send any commands but only data.
 
-Other operations supported by lcd module can be found in reference manual. 
+Other operations supported by lcd module can be found in reference manual.
+
+Display drawing time for full screen takes almost 0.4 Sec with teensy 96Mhz. SPI clock is set at 12MHz in the Adafruit library. Experimented by changing SPI clock (found here https://www.pjrc.com/teensy/td_libs_SPI.html) with SPISettings class but display drawing time is seen same
+
+Added a new library from scratch for displaying a progress bar on the lcd. This can be used for displaying various sensor data graphicaly
