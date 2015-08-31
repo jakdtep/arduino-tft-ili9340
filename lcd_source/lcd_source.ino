@@ -20,8 +20,8 @@ josephandly@gmail.com
 #include "Adafruit_GFX.h"
 #include "Adafruit_ILI9340.h"
 
-#include "linux_boot_log.h"
 #include "disp_info_objects.h"
+#include "bit_maps.h"
 
 #define USE_HW_SPI
 
@@ -36,111 +36,94 @@ josephandly@gmail.com
 
 #ifdef USE_HW_SPI
 /*in HW SPI other lines are hardware controlled. refer arduino pinout*/
-static Adafruit_ILI9340 lcdObj = Adafruit_ILI9340(SPI_LCD_CS, SPI_LCD_DC, SPI_LCD_RST);
+static LcdDev lcdDevObj = LcdDev(SPI_LCD_CS, SPI_LCD_DC, SPI_LCD_RST,
+				90, ILI9340_BLACK);
 #else
 /* in software SPI all lines are bitbanged in SW*/
-static Adafruit_ILI9340 lcdObj = Adafruit_ILI9340(SPI_LCD_CS, SPI_LCD_DC, SPI_MOSI, SPI_CLOCK, SPI_LCD_RST, SPI_MISO);
+static LcdDev lcdDevObj = LcdDev(SPI_LCD_CS, SPI_LCD_DC, SPI_MOSI, SPI_CLOCK, SPI_LCD_RST, SPI_MISO,
+				90, ILI9340_BLACK);
 #endif
-
-static uint8_t curLcdOrientation = 0;
-
-/*char height is multiple of 8 starting with 8 pixels when 1*/
-#define BOOT_TEXT_SIZE	1
-
-/*maximum no. lines in landscape with font size 8 pixels (320/8)*/
-#define MAX_LINES_LANDSCAPE	40
-/*maximum no. lines in portrait with font size 8 pixels (240/8)*/
-#define MAX_LINES_PORTRAIT	30
 
 static ProgressBar pgBar1;
 static ProgressBar pgBar2;
-
-/*This function fakes a progress by dots with fixed delay*/
-void showFakeDotProgress(uint16_t count, uint16_t delayMs)
-{
-	int i;
-	for(i=0; i<count; i++)
-	{
-		lcdObj.printf(".");
-		delay(delayMs);
-	}
-}
-
-void showFakeBootLog()
-{
-	int linei;
-	uint8_t linesCount, logLines;
-	lcdObj.fillScreen(ILI9340_BLACK);
-	lcdObj.setCursor(0, 0);
-	lcdObj.setTextColor(ILI9340_WHITE);
-	lcdObj.setTextSize(BOOT_TEXT_SIZE);
-	/*find no. of lines from orientation*/
-	if(curLcdOrientation & 1)
-		linesCount = (MAX_LINES_PORTRAIT/BOOT_TEXT_SIZE);
-	else
-		linesCount = (MAX_LINES_LANDSCAPE/BOOT_TEXT_SIZE);
-	logLines =  sizeof(linuxBootLogStr)/LINUX_BOOT_LOG_LINE_WIDTH;
-
-	lcdObj.printf("Waiting for Devices");
-	showFakeDotProgress(6, 300);
-	lcdObj.printf("\n");
-	lcdObj.printf("Uncompressing Linux");
-	showFakeDotProgress(50, 100);
-	lcdObj.printf("\n");
-	for(linei=0; linei<logLines; linei++)
-	{
-		if(!(linei % linesCount) && linei)
-		{
-			lcdObj.fillScreen(ILI9340_BLACK);
-			lcdObj.setCursor(0, 0);
-			delay(linei);
-		}
-
-		lcdObj.printf("%s\n", linuxBootLogStr[linei]);
-		delay(linei%50);
-	}
-
-}
+static ProgressBar pgBar3;
+static Icon	icon1;
+static Icon	icon2;
+static Icon	icon3;
 
 void setup()
 {
 	/*initialize serial port for debug prints*/
 	Serial.begin(9600);
-	/*initialize the lcd moduel*/
-	Serial.printf("jak:> initializing LCD!\n");
-	SPI.setSCK(14);
-
-	lcdObj.begin();
-	lcdObj.fillScreen(ILI9340_BLACK);
 	
-	for(int i=3; i<4; i++)
+	Serial.printf("jak:> clear LCD!\n");
+	lcdDevObj.clearScreen();
+	
+	for(int i=270; i<360; i+=90)
 	{
-		lcdObj.setRotation(i);
-		curLcdOrientation = i;
-		showFakeBootLog();
+		lcdDevObj.rotateScreen(i);
+		lcdDevObj.showFakeBootLog();
 	}
 	delay(1000);
-	lcdObj.fillScreen(ILI9340_BLACK);
 
-	pgBar1.x = 10;
-	pgBar1.y = 160;
-	pgBar1.width = 100;
+	lcdDevObj.clearScreen();
+
+	pgBar1.x = 0;
+	pgBar1.y = 120;
+	pgBar1.width = 320;
 	pgBar1.height = 25;
 	pgBar1.brdColor = ILI9340_BLUE;
 	pgBar1.color = ILI9340_RED;
 	pgBar1.bgColor = ILI9340_GREEN;
 
-	createProgressBar(&lcdObj, &pgBar1);
+	createProgressBar(&lcdDevObj, &pgBar1);
 	
-	pgBar2.x = 10;
-	pgBar2.y = 40;
-	pgBar2.width = 150;
+	pgBar2.x = 2;
+	pgBar2.y = 157;
+	pgBar2.width = 250;
 	pgBar2.height = 25;
-	pgBar2.brdColor = ILI9340_YELLOW;
-	pgBar2.color = ILI9340_BLUE;
-	pgBar2.bgColor = ILI9340_RED;
+	pgBar2.brdColor = ILI9340_BLUE;
+	pgBar2.color = ILI9340_RED;
+	pgBar2.bgColor = ILI9340_GREEN;
 
-	createProgressBar(&lcdObj, &pgBar2);
+	createProgressBar(&lcdDevObj, &pgBar2);
+	
+	pgBar3.x = 2;
+	pgBar3.y = 194;
+	pgBar3.width = 250;
+	pgBar3.height = 25;
+	pgBar3.brdColor = ILI9340_YELLOW;
+	pgBar3.color = ILI9340_BLUE;
+	pgBar3.bgColor = ILI9340_RED;
+
+	createProgressBar(&lcdDevObj, &pgBar3);
+
+	icon1.x = 0;
+	icon1.y = 0;
+	icon1.width = heat32x32.width;
+	icon1.height = heat32x32.height;
+	icon1.rgb565Data = (const uint16_t*)heat32x32.pixel_data;
+	icon1.brdColor = ILI9340_BLUE;	
+	
+	drawIcon(&lcdDevObj, &icon1);
+	
+	icon2.x = 80;
+	icon2.y = 0;
+	icon2.width = bulb32x32.width;
+	icon2.height = bulb32x32.height;
+	icon2.rgb565Data = (const uint16_t*)bulb32x32.pixel_data;
+	icon2.brdColor = ILI9340_BLUE;	
+	
+	drawIcon(&lcdDevObj, &icon2);
+	
+	icon3.x = 160;
+	icon3.y = 0;
+	icon3.width = mic32x32.width;
+	icon3.height = mic32x32.height;
+	icon3.rgb565Data = (const uint16_t*)mic32x32.pixel_data;
+	icon3.brdColor = ILI9340_BLUE;	
+	
+	drawIcon(&lcdDevObj, &icon3);
 }
 
 
@@ -149,7 +132,7 @@ void loop()
 	unsigned long time = micros();
 	pgBar1.value = time%100;
 	pgBar2.value = time%100;
-	updateProgressBar(&lcdObj, &pgBar1);
-	updateProgressBar(&lcdObj, &pgBar2);
+	updateProgressBar(&lcdDevObj, &pgBar1);
+	updateProgressBar(&lcdDevObj, &pgBar2);
 	delay(50);
 }
